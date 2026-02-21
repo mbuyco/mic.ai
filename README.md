@@ -27,14 +27,14 @@
 - `@michael` is treated as plain text and can be matched as a keyword/prefix.
 - Scheduled/recurring messages outside the 24h window must use approved templates (template pathway is next step).
 
-## Containerized Setup (Podman)
+## Containerized Setup (Docker or Podman)
 
 This project is configured to run with container-managed config and secrets.
 
 Requirements:
 
-- Podman 5+
-- `podman compose` or `podman-compose`
+- Docker Engine + `docker compose`, or
+- Podman 5+ with `podman compose` or `podman-compose`
 
 Quick start:
 
@@ -77,6 +77,10 @@ Fedora/SELinux note:
 
 - Secrets are mounted with `:z` in `compose.yml` so multiple containers can share `/run/secrets` on SELinux-enforcing hosts.
 - `bin/up` automatically normalizes secret file permissions to avoid rootless Podman read errors.
+
+Compose launcher behavior:
+
+- `bin/compose` tries `podman compose`, then `podman-compose`, then `docker compose`.
 
 ## Environment Variables
 

@@ -2,8 +2,8 @@
 set -euo pipefail
 
 if [[ $# -lt 1 ]]; then
-  echo "Usage: $0 <render-api-url> [verify-token]"
-  echo "Example: $0 https://micai-api.onrender.com \$MICAI_WHATSAPP_VERIFY_TOKEN"
+  echo "Usage: $0 <public-api-url> [verify-token]"
+  echo "Example: $0 https://bot.example.com \$MICAI_WHATSAPP_VERIFY_TOKEN"
   exit 1
 fi
 
