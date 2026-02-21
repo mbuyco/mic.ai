@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+COMPOSE="$ROOT_DIR/bin/compose"
+
+"$ROOT_DIR/bin/ensure-secrets-perms"
+
+if [[ "${1:-}" == "--foreground" ]]; then
+  shift
+  exec "$COMPOSE" up --build "$@"
+fi
+
+exec "$COMPOSE" up --build -d "$@"

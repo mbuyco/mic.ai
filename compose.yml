@@ -1,0 +1,92 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: micai
+      POSTGRES_USER: micai
+      POSTGRES_PASSWORD: micai
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U micai -d micai"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build:
+      context: .
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      MICAI_APP_ENV: dev
+      MICAI_DATABASE_URL: postgresql+psycopg://micai:micai@postgres:5432/micai
+      MICAI_REDIS_URL: redis://redis:6379/0
+      MICAI_ADMIN_API_KEY_FILE: /run/secrets/admin_api_key
+      MICAI_WHATSAPP_VERIFY_TOKEN_FILE: /run/secrets/whatsapp_verify_token
+      MICAI_WHATSAPP_ACCESS_TOKEN_FILE: /run/secrets/whatsapp_access_token
+      MICAI_WHATSAPP_PHONE_NUMBER_ID_FILE: /run/secrets/whatsapp_phone_number_id
+      MICAI_OUTBOUND_REPLY_ENABLED: "false"
+      MICAI_REQUIRE_INVOKE_PREFIX: "true"
+      MICAI_INVOKE_PREFIXES: michael:,@michael,/ask
+      MICAI_FREEFORM_WINDOW_HOURS: "24"
+    volumes:
+      - ./secrets:/run/secrets:ro,z
+    ports:
+      - "8001:8000"
+
+  worker:
+    build:
+      context: .
+    command: ["python", "-m", "app.worker"]
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      MICAI_APP_ENV: dev
+      MICAI_DATABASE_URL: postgresql+psycopg://micai:micai@postgres:5432/micai
+      MICAI_REDIS_URL: redis://redis:6379/0
+      MICAI_ADMIN_API_KEY_FILE: /run/secrets/admin_api_key
+      MICAI_WHATSAPP_VERIFY_TOKEN_FILE: /run/secrets/whatsapp_verify_token
+      MICAI_WHATSAPP_ACCESS_TOKEN_FILE: /run/secrets/whatsapp_access_token
+      MICAI_WHATSAPP_PHONE_NUMBER_ID_FILE: /run/secrets/whatsapp_phone_number_id
+      MICAI_OUTBOUND_REPLY_ENABLED: "false"
+      MICAI_REQUIRE_INVOKE_PREFIX: "true"
+      MICAI_INVOKE_PREFIXES: michael:,@michael,/ask
+      MICAI_FREEFORM_WINDOW_HOURS: "24"
+    volumes:
+      - ./secrets:/run/secrets:ro,z
+
+  scheduler:
+    build:
+      context: .
+    command: ["python", "-m", "app.scheduler"]
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      MICAI_APP_ENV: dev
+      MICAI_DATABASE_URL: postgresql+psycopg://micai:micai@postgres:5432/micai
+      MICAI_REDIS_URL: redis://redis:6379/0
+      MICAI_ADMIN_API_KEY_FILE: /run/secrets/admin_api_key
+      MICAI_WHATSAPP_VERIFY_TOKEN_FILE: /run/secrets/whatsapp_verify_token
+      MICAI_WHATSAPP_ACCESS_TOKEN_FILE: /run/secrets/whatsapp_access_token
+      MICAI_WHATSAPP_PHONE_NUMBER_ID_FILE: /run/secrets/whatsapp_phone_number_id
+      MICAI_OUTBOUND_REPLY_ENABLED: "false"
+      MICAI_REQUIRE_INVOKE_PREFIX: "true"
+      MICAI_INVOKE_PREFIXES: michael:,@michael,/ask
+      MICAI_FREEFORM_WINDOW_HOURS: "24"
+    volumes:
+      - ./secrets:/run/secrets:ro,z
+
+volumes:
+  pgdata:

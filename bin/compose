@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+COMPOSE_FILE="$ROOT_DIR/compose.yml"
+
+if command -v podman >/dev/null 2>&1 && podman compose version >/dev/null 2>&1; then
+  exec podman compose -f "$COMPOSE_FILE" "$@"
+fi
+
+if command -v podman-compose >/dev/null 2>&1; then
+  exec podman-compose -f "$COMPOSE_FILE" "$@"
+fi
+
+echo "Error: neither 'podman compose' nor 'podman-compose' is available." >&2
+exit 1
