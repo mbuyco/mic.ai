@@ -1,0 +1,151 @@
+services:
+  - type: web
+    name: micai-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    dockerCommand: uvicorn app.main:app --host 0.0.0.0 --port 8000
+    healthCheckPath: /health
+    envVars:
+      - key: MICAI_APP_ENV
+        value: prod
+      - key: MICAI_DATABASE_URL
+        fromDatabase:
+          name: micai-postgres
+          property: connectionString
+      - key: MICAI_REDIS_URL
+        fromService:
+          type: keyvalue
+          name: micai-redis
+          property: connectionString
+      - key: MICAI_ADMIN_API_KEY
+        generateValue: true
+      - key: MICAI_WHATSAPP_VERIFY_TOKEN
+        sync: false
+      - key: MICAI_WHATSAPP_ACCESS_TOKEN
+        sync: false
+      - key: MICAI_WHATSAPP_PHONE_NUMBER_ID
+        sync: false
+      - key: MICAI_OUTBOUND_REPLY_ENABLED
+        value: false
+      - key: MICAI_REQUIRE_INVOKE_PREFIX
+        value: true
+      - key: MICAI_INVOKE_PREFIXES
+        value: michael:,@michael,/ask
+
+  - type: worker
+    name: micai-worker
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    dockerCommand: python -m app.worker
+    envVars:
+      - key: MICAI_APP_ENV
+        value: prod
+      - key: MICAI_DATABASE_URL
+        fromDatabase:
+          name: micai-postgres
+          property: connectionString
+      - key: MICAI_REDIS_URL
+        fromService:
+          type: keyvalue
+          name: micai-redis
+          property: connectionString
+      - key: MICAI_ADMIN_API_KEY
+        fromService:
+          type: web
+          name: micai-api
+          envVarKey: MICAI_ADMIN_API_KEY
+      - key: MICAI_WHATSAPP_VERIFY_TOKEN
+        fromService:
+          type: web
+          name: micai-api
+          envVarKey: MICAI_WHATSAPP_VERIFY_TOKEN
+      - key: MICAI_WHATSAPP_ACCESS_TOKEN
+        fromService:
+          type: web
+          name: micai-api
+          envVarKey: MICAI_WHATSAPP_ACCESS_TOKEN
+      - key: MICAI_WHATSAPP_PHONE_NUMBER_ID
+        fromService:
+          type: web
+          name: micai-api
+          envVarKey: MICAI_WHATSAPP_PHONE_NUMBER_ID
+      - key: MICAI_OUTBOUND_REPLY_ENABLED
+        fromService:
+          type: web
+          name: micai-api
+          envVarKey: MICAI_OUTBOUND_REPLY_ENABLED
+      - key: MICAI_REQUIRE_INVOKE_PREFIX
+        fromService:
+          type: web
+          name: micai-api
+          envVarKey: MICAI_REQUIRE_INVOKE_PREFIX
+      - key: MICAI_INVOKE_PREFIXES
+        fromService:
+          type: web
+          name: micai-api
+          envVarKey: MICAI_INVOKE_PREFIXES
+
+  - type: worker
+    name: micai-scheduler
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    dockerCommand: python -m app.scheduler
+    envVars:
+      - key: MICAI_APP_ENV
+        value: prod
+      - key: MICAI_DATABASE_URL
+        fromDatabase:
+          name: micai-postgres
+          property: connectionString
+      - key: MICAI_REDIS_URL
+        fromService:
+          type: keyvalue
+          name: micai-redis
+          property: connectionString
+      - key: MICAI_ADMIN_API_KEY
+        fromService:
+          type: web
+          name: micai-api
+          envVarKey: MICAI_ADMIN_API_KEY
+      - key: MICAI_WHATSAPP_VERIFY_TOKEN
+        fromService:
+          type: web
+          name: micai-api
+          envVarKey: MICAI_WHATSAPP_VERIFY_TOKEN
+      - key: MICAI_WHATSAPP_ACCESS_TOKEN
+        fromService:
+          type: web
+          name: micai-api
+          envVarKey: MICAI_WHATSAPP_ACCESS_TOKEN
+      - key: MICAI_WHATSAPP_PHONE_NUMBER_ID
+        fromService:
+          type: web
+          name: micai-api
+          envVarKey: MICAI_WHATSAPP_PHONE_NUMBER_ID
+      - key: MICAI_OUTBOUND_REPLY_ENABLED
+        fromService:
+          type: web
+          name: micai-api
+          envVarKey: MICAI_OUTBOUND_REPLY_ENABLED
+      - key: MICAI_REQUIRE_INVOKE_PREFIX
+        fromService:
+          type: web
+          name: micai-api
+          envVarKey: MICAI_REQUIRE_INVOKE_PREFIX
+      - key: MICAI_INVOKE_PREFIXES
+        fromService:
+          type: web
+          name: micai-api
+          envVarKey: MICAI_INVOKE_PREFIXES
+
+  - type: keyvalue
+    name: micai-redis
+    ipAllowList: []
+
+databases:
+  - name: micai-postgres
+    plan: free
+    ipAllowList: []

@@ -11,7 +11,7 @@
 - Template gating for out-of-window sends (24h customer care window)
 - Cost-first defaults: outbound API calls disabled in local dev
 
-## Architecture (Phase 2)
+## Current Architecture
 
 - **FastAPI service** (`app/main.py`) for webhook and admin endpoints
 - **Postgres repository** (`app/repository.py`) for rules, dedupe, turns, schedules, send ledger
@@ -36,15 +36,13 @@ Requirements:
 - Podman 5+
 - `podman compose` or `podman-compose`
 
-Create secret files (one value per file):
+Quick start:
 
 ```bash
-mkdir -p secrets
-printf 'your-admin-key' > secrets/admin_api_key
-printf 'your-verify-token' > secrets/whatsapp_verify_token
-printf 'your-access-token' > secrets/whatsapp_access_token
-printf 'your-phone-number-id' > secrets/whatsapp_phone_number_id
+bin/init-secrets
 ```
+
+Then edit the values in `secrets/*` (one value per file).
 
 Start stack:
 
@@ -68,6 +66,12 @@ Convenience scripts:
 - `bin/health` check API health endpoint
 
 API is exposed on `http://localhost:8001`.
+
+Notes:
+
+- `compose.yml` runs 3 processes: `api` (FastAPI), `worker`, and `scheduler`, plus `postgres` + `redis`.
+- Outbound sends are disabled by default (`MICAI_OUTBOUND_REPLY_ENABLED=false`) to avoid accidental costs.
+- Do not commit `secrets/*`.
 
 Fedora/SELinux note:
 
@@ -105,6 +109,42 @@ Preferred in containers (`compose.yml` uses these):
 - `POST /admin/bind/{wa_id}/{agent_id}` bind WhatsApp user to agent
 
 Admin endpoints require `x-admin-key` header.
+
+## Local Development (No Containers)
+
+Requirements:
+
+- Python 3.11+
+- Postgres + Redis (or run them via containers and run only the API locally)
+
+Setup + run:
+
+```bash
+python -m venv .venv
+. .venv/bin/activate
+python -m pip install -U pip
+python -m pip install -e ".[dev]"
+
+# provide env vars (or export *_FILE equivalents)
+export MICAI_DATABASE_URL='postgresql+psycopg://...'
+export MICAI_REDIS_URL='redis://localhost:6379/0'
+export MICAI_ADMIN_API_KEY='...'
+
+uvicorn app.main:app --reload --port 8001
+```
+
+Run background processors (separate terminals):
+
+```bash
+python -m app.worker
+python -m app.scheduler
+```
+
+## Tests
+
+```bash
+python -m pytest
+```
 
 ## Next Execution Milestones
 
